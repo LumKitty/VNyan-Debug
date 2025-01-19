@@ -24,12 +24,13 @@ namespace Debug_Plugin
     public class Debug_Plugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler, VNyanInterface.ITriggerHandler
     {
         private string ErrorFile = "";
-        string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
+        // string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
         private string LogFile = "";
-        private string Version = "0.1-alpha";
+        private string Version = "0.2-alpha";
         private string ConsolePath = "";
         private StreamWriter DebugStreamWriter = null;
         private Process DebugProcess = null;
+        private bool DebugProcessRunning = false;
         dynamic SettingsJSON;
         List<String> MonitorTriggers;
         private void Log(string message)
@@ -38,7 +39,7 @@ namespace Debug_Plugin
             {
                 System.IO.File.AppendAllText(LogFile, message + "\r\n");
             }
-            if (DebugStreamWriter != null)
+            if (DebugProcessRunning)
             {
                 DebugStreamWriter.WriteLine(message);
             }
@@ -175,6 +176,10 @@ namespace Debug_Plugin
                 ErrorHandler(e);
             }
         }
+        private bool ProcessExists(int id)
+        {
+            return Process.GetProcesses().Any(x => x.Id == id);
+        }
         async Task RunDebugProcess()
         {
             using (DebugProcess = new Process())
@@ -182,33 +187,38 @@ namespace Debug_Plugin
                 DebugProcess.StartInfo.FileName = ConsolePath;
                 DebugProcess.StartInfo.UseShellExecute = false;
                 DebugProcess.StartInfo.RedirectStandardInput = true;
+                DebugProcess.StartInfo.RedirectStandardOutput = false;
+                DebugProcess.StartInfo.RedirectStandardError = false;
                 DebugProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                 DebugProcess.StartInfo.CreateNoWindow = false;
                 DebugProcess.EnableRaisingEvents = true;
                 DebugProcess.Start();
+                DebugProcessRunning = true;
+                // int PID = DebugProcess.Id;
                 DebugStreamWriter = DebugProcess.StandardInput;
-                DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
-                DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
+                // DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
+                // DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
+
+                /* do {
+                    Thread.Sleep(1000);
+                } while (ProcessExists(PID)); */
                 DebugProcess.WaitForExit();
-                DebugStreamWriter.Close();
-                DebugStreamWriter.Dispose();
-                DebugStreamWriter = null;
-                DebugProcess.Dispose();
-                DebugProcess = null;
+                DebugProcessRunning = false;
                 Log("Monitoring process terminated");
+                Log("Cleanup complete");
             }
         }
 
         public void pluginButtonClicked()
         {
-            if (DebugProcess == null)
+            if (!DebugProcessRunning)
             {
-                Log("The button was pressed!");
+                Log("Plugin button pressed (Debug console not running)");
                 Task.Run(() => RunDebugProcess());
 
             } else
             {
-                Log("The button was pressed again!");
+                Log("Plugin button pressed (Debug console is running)");
             }
         }
     }

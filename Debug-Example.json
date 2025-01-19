@@ -1,0 +1,170 @@
+{
+    "graphName": "Debug-Example",
+    "graphIsActive": true,
+    "nodes": [
+        {
+            "id": "4072d636-e9b5-4f45-b92d-8c32dd9c3f1d",
+            "values": [
+                {
+                    "key": "triggerName",
+                    "value": "_lum_dbg_log"
+                },
+                {
+                    "key": "callTime",
+                    "value": "0"
+                }
+            ],
+            "posX": 20.0,
+            "posY": 114.0,
+            "path": "Nodes/CallTriggerNode",
+            "inputSocketIds": [
+                "2fe9bb47-0301-408a-85df-082d18fc4dec638728295142466694"
+            ],
+            "outputSocketIds": [],
+            "headerColor": 0,
+            "inputValueSocketIds": [
+                "84f7cd0d-3e10-46ef-8fae-74977cb1a0bd638728295142466694",
+                "285556ab-aa34-44b6-83f6-6ece6b2949bd638728295142466694",
+                "379ac03e-3cea-458e-ac15-d603ef0b2175638728295142466694",
+                "c9a8b3e8-4b9d-4ec4-8ddb-e8170f620750638728295142466694",
+                "776ea2ff-2aac-4e31-b91b-6e2cde4c80c8638728295142466694",
+                "1cf2fa2c-ea7d-4beb-873d-56fc2235f954638728295142466694",
+                "93a46ece-77e0-49ea-beeb-a1782e6f9484638728295142466694"
+            ],
+            "outputValueSocketIds": []
+        },
+        {
+            "id": "faa553b8-7343-4d67-bf95-9566acc6221f",
+            "values": [
+                {
+                    "key": "redeemValue",
+                    "value": "Test-DebugLog"
+                }
+            ],
+            "posX": -381.0,
+            "posY": 145.0,
+            "path": "Nodes/RedeemNode",
+            "inputSocketIds": [],
+            "outputSocketIds": [
+                "2c0c487d-eef5-4c9f-a50d-fd12309eac9b638728295231728628"
+            ],
+            "headerColor": 0,
+            "inputValueSocketIds": [],
+            "outputValueSocketIds": [
+                "3adc9a0b-7d6f-4ec2-808d-94ee16ea9cb8638728295231728628",
+                "9aba1e2a-e277-4fd2-80c0-b5902b8419e4638728295231728628",
+                "5d059613-ae44-4dda-8407-73504e02c41b638728295231728628",
+                "aadd12ba-a1b4-451b-a838-75ccac4235fa638728295231728628"
+            ]
+        },
+        {
+            "id": "37413e07-1a85-4fe1-97b3-cabd778106e1",
+            "values": [
+                {
+                    "key": "triggerName",
+                    "value": "_lum_dbg_err"
+                },
+                {
+                    "key": "callTime",
+                    "value": "0"
+                }
+            ],
+            "posX": 22.0,
+            "posY": -193.0,
+            "path": "Nodes/CallTriggerNode",
+            "inputSocketIds": [
+                "41c07b31-083d-45f6-903c-ee73853adf03638728308979798381"
+            ],
+            "outputSocketIds": [],
+            "headerColor": 0,
+            "inputValueSocketIds": [
+                "e8e0a3b9-1563-4353-8c58-a1c314115422638728308979798381",
+                "e3fc20c8-62fa-4254-ae57-83ac347444d5638728308979798381",
+                "8cfb695b-0cd0-4ccd-a5ee-a76c00017992638728308979798381",
+                "ae5e6b21-540e-400d-93af-d7c8872567d6638728308979798381",
+                "cb704d22-0109-4bf1-baaf-a27c00bdbe8b638728308979798381",
+                "bfbd150d-1073-416c-bf41-ea7f7eff78b5638728308979798381",
+                "5ec25b20-5ea3-43ad-8ec7-a5d5dfb934f6638728308979798381"
+            ],
+            "outputValueSocketIds": []
+        },
+        {
+            "id": "cd479ba2-0ba8-4f2a-af26-a052c11d3e53",
+            "values": [
+                {
+                    "key": "redeemValue",
+                    "value": "Test-DebugError"
+                }
+            ],
+            "posX": -361.0,
+            "posY": -194.0,
+            "path": "Nodes/RedeemNode",
+            "inputSocketIds": [],
+            "outputSocketIds": [
+                "6b16d7c9-3621-4810-9cc6-96762432ddf3638728309036380048"
+            ],
+            "headerColor": 0,
+            "inputValueSocketIds": [],
+            "outputValueSocketIds": [
+                "6eae33d0-6404-4f24-88c2-2ad425ce63e0638728309036380048",
+                "6cb23251-b282-4ac8-acfa-4d0eae2c2ecb638728309036380048",
+                "a739aa3c-6f1a-41f8-83af-9bb0a3237df1638728309036380048",
+                "1da37849-24f4-452e-bc50-123f8cbcd115638728309036380048"
+            ]
+        }
+    ],
+    "connections": [
+        {
+            "id": "fefa649a-0baa-4472-81cc-67009342a194",
+            "outputSocketId": "2c0c487d-eef5-4c9f-a50d-fd12309eac9b638728295231728628",
+            "inputSocketId": "2fe9bb47-0301-408a-85df-082d18fc4dec638728295142466694"
+        },
+        {
+            "id": "49cb0576-1784-4eea-9cde-8524b07dacf5",
+            "outputSocketId": "6b16d7c9-3621-4810-9cc6-96762432ddf3638728309036380048",
+            "inputSocketId": "41c07b31-083d-45f6-903c-ee73853adf03638728308979798381"
+        }
+    ],
+    "valueConnections": [
+        {
+            "id": "fb4d5fcd-8bed-48f9-9254-b345b74c4bf1",
+            "outputSocketId": "3adc9a0b-7d6f-4ec2-808d-94ee16ea9cb8638728295231728628",
+            "inputSocketId": "776ea2ff-2aac-4e31-b91b-6e2cde4c80c8638728295142466694"
+        },
+        {
+            "id": "444ca91c-8ac7-4f53-a2c1-f0407b11365a",
+            "outputSocketId": "5d059613-ae44-4dda-8407-73504e02c41b638728295231728628",
+            "inputSocketId": "1cf2fa2c-ea7d-4beb-873d-56fc2235f954638728295142466694"
+        },
+        {
+            "id": "cbbdd070-0bb1-4b73-98f0-892676f62bf9",
+            "outputSocketId": "aadd12ba-a1b4-451b-a838-75ccac4235fa638728295231728628",
+            "inputSocketId": "93a46ece-77e0-49ea-beeb-a1782e6f9484638728295142466694"
+        },
+        {
+            "id": "940a88b4-9bad-431e-aa54-701cd4054258",
+            "outputSocketId": "9aba1e2a-e277-4fd2-80c0-b5902b8419e4638728295231728628",
+            "inputSocketId": "285556ab-aa34-44b6-83f6-6ece6b2949bd638728295142466694"
+        },
+        {
+            "id": "bef44c98-efa1-41d1-8861-1b49b0eba002",
+            "outputSocketId": "6eae33d0-6404-4f24-88c2-2ad425ce63e0638728309036380048",
+            "inputSocketId": "cb704d22-0109-4bf1-baaf-a27c00bdbe8b638728308979798381"
+        },
+        {
+            "id": "e688e2c7-cfdd-493d-a0b6-98a4cc6a36ea",
+            "outputSocketId": "a739aa3c-6f1a-41f8-83af-9bb0a3237df1638728309036380048",
+            "inputSocketId": "bfbd150d-1073-416c-bf41-ea7f7eff78b5638728308979798381"
+        },
+        {
+            "id": "63c6ba85-6c48-4570-8222-2df8e8868796",
+            "outputSocketId": "1da37849-24f4-452e-bc50-123f8cbcd115638728309036380048",
+            "inputSocketId": "5ec25b20-5ea3-43ad-8ec7-a5d5dfb934f6638728308979798381"
+        },
+        {
+            "id": "ab03ddcf-f246-4a3b-8422-cc0765002efe",
+            "outputSocketId": "6cb23251-b282-4ac8-acfa-4d0eae2c2ecb638728309036380048",
+            "inputSocketId": "e3fc20c8-62fa-4254-ae57-83ac347444d5638728308979798381"
+        }
+    ]
+}
