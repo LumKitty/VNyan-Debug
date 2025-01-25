@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Debug-UI": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\lum\\AppData\\LocalLow\\Suvidriel\\VNyan"
+    }
+  }
+}

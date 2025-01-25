@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,13 +27,18 @@ namespace Debug_Plugin
         private string ErrorFile = "";
         // string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
         private string LogFile = "";
-        private string Version = "0.2-alpha";
+        private string Version = "0.3-alpha";
         private string ConsolePath = "";
         private StreamWriter DebugStreamWriter = null;
+        private StreamReader UIStreamReader = null;
         private Process DebugProcess = null;
+        private Process UIProcess = null;
         private bool DebugProcessRunning = false;
+        private bool UIProcessRunning = false;
+        private int DebugPID;
+        private int UIPID;
         dynamic SettingsJSON;
-        List<String> MonitorTriggers;
+        List<String> MonitorTriggers = new List<String> { };
         private void Log(string message)
         {
             if (LogFile.ToString().Length > 0)
@@ -101,6 +107,7 @@ namespace Debug_Plugin
         {
             System.IO.File.WriteAllText(ErrorFile, e.ToString());
             CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
+            Log("DBG:" + e.ToString());
         }
         void CallVNyan(string TriggerName, int int1, int int2, int int3, string Text1, string Text2, string Text3)
         {
@@ -132,13 +139,24 @@ namespace Debug_Plugin
                     CommandLine = CommandLine.Substring(0,CommandLine.IndexOf(" "));
                 }
                 Log("VNyan path: " + CommandLine);
-                ConsolePath = Path.GetDirectoryName(CommandLine) + "\\Items\\Assemblies\\Debug-Console.exe";
+                ConsolePath = Path.GetDirectoryName(CommandLine) + "\\Items\\Assemblies\\Debug-UI.exe";
                 if (File.Exists(ConsolePath))
                 {
                     Log("Debug Console found at: " + ConsolePath);
                 } else
                 {
                     Log("Debug Console not found should be at: " + ConsolePath);
+                }
+                string DefaultTriggers = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\DefaultTriggers.txt";
+                if (File.Exists (DefaultTriggers))
+                {
+                    foreach (string Item in File.ReadAllLines(DefaultTriggers))
+                    {
+                        if (Item.Substring(0, 1) == "+")
+                        {
+                            MonitorTriggers.Add(Item.Substring(1).ToLower());
+                        }
+                    }
                 }
             }
             catch (Exception e)
@@ -152,6 +170,7 @@ namespace Debug_Plugin
             {
                 if (name.Length > 10)
                 {
+                    name = name.ToLower();
                     if (name.Substring(0, 9) == "_lum_dbg_")
                     {
                         //Log("Detected trigger: " + name + " with " + int1.ToString() + ", " + SessionID.ToString() + ", " + PlatformID.ToString() + ", " + text1 + ", " + text2 + ", " + Callback);
@@ -163,13 +182,33 @@ namespace Debug_Plugin
                             case "_err":
                                 Log("ERR: " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + "|" + text1 + "|" + text2 + "|" + text3);
                                 break;
-                                // Log("Detected: " + name + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + text1 + ", " + text2 + ", " + text3);
+                            // Log("Detected: " + name + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + text1 + ", " + text2 + ", " + text3);
+                            case "_getcam":
+                                var camera = Camera.main;
+                                float pX = camera.transform.position.x;
+                                float pY = camera.transform.position.y;
+                                float pZ = camera.transform.position.z;
+                                float rX = camera.transform.rotation.eulerAngles.x;
+                                float rY = camera.transform.rotation.eulerAngles.y;
+                                float rZ = camera.transform.rotation.eulerAngles.z;
+                                float FOV = camera.fieldOfView;
+                                Log("Copy this text and import into LIV:\n" +
+                                    "fov=" + FOV.ToString("0.0000000000000") + "\n" +
+                                    "x=" + pX.ToString("0.0000000000000") + "\n" +
+                                    "y=" + pY.ToString("0.0000000000000") + "\n" +
+                                    "z=" + pZ.ToString("0.0000000000000") + "\n" +
+                                    "rx=" + rX.ToString("0.0000000000000") + "\n" +
+                                    "ry=" + rY.ToString("0.0000000000000") + "\n" +
+                                    "rz=" + rZ.ToString("0.0000000000000")
+                                );
+                                break;
+
                         }
                     }
                 }
-                /*if (MonitorTriggers.Contains(name)) {
+                if (MonitorTriggers.Contains(name)) {
                     Log("TRG: " +name+"|"+ int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + "|" + text1 + "|" + text2 + "|" + text3);
-                }*/
+                }
             }
             catch (Exception e)
             {
@@ -182,30 +221,104 @@ namespace Debug_Plugin
         }
         async Task RunDebugProcess()
         {
-            using (DebugProcess = new Process())
-            {
-                DebugProcess.StartInfo.FileName = ConsolePath;
-                DebugProcess.StartInfo.UseShellExecute = false;
-                DebugProcess.StartInfo.RedirectStandardInput = true;
-                DebugProcess.StartInfo.RedirectStandardOutput = false;
-                DebugProcess.StartInfo.RedirectStandardError = false;
-                DebugProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-                DebugProcess.StartInfo.CreateNoWindow = false;
-                DebugProcess.EnableRaisingEvents = true;
-                DebugProcess.Start();
-                DebugProcessRunning = true;
-                // int PID = DebugProcess.Id;
-                DebugStreamWriter = DebugProcess.StandardInput;
-                // DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
-                // DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
 
-                /* do {
-                    Thread.Sleep(1000);
-                } while (ProcessExists(PID)); */
-                DebugProcess.WaitForExit();
-                DebugProcessRunning = false;
-                Log("Monitoring process terminated");
-                Log("Cleanup complete");
+            DebugProcess = new Process();
+            DebugProcess.StartInfo.FileName = ConsolePath;
+            DebugProcess.StartInfo.UseShellExecute = false;
+            DebugProcess.StartInfo.RedirectStandardInput = true;
+            DebugProcess.StartInfo.RedirectStandardOutput = false;
+            DebugProcess.StartInfo.RedirectStandardError = true;
+            DebugProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+            DebugProcess.StartInfo.CreateNoWindow = false;
+            DebugProcess.EnableRaisingEvents = true;
+            DebugProcess.Start();
+            DebugProcessRunning = true;
+            DebugPID = DebugProcess.Id;
+            DebugStreamWriter = DebugProcess.StandardInput;
+            // DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
+            // DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
+            do
+            {
+                Thread.Sleep(100);
+            } while (ProcessExists(DebugPID));
+            DebugProcessRunning = false;
+            Log("Debug console process terminated");
+        }
+
+        async Task RunDebugUI()
+        {
+            try {
+                string ConsoleInput;
+                string Message;
+                string Trigger;
+                UIProcess = new Process();
+                UIProcess.StartInfo.FileName = ConsolePath;
+                UIProcess.StartInfo.UseShellExecute = false;
+                UIProcess.StartInfo.RedirectStandardInput = false;
+                UIProcess.StartInfo.RedirectStandardOutput = true;
+                UIProcess.StartInfo.RedirectStandardError = false;
+                UIProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+                UIProcess.StartInfo.CreateNoWindow = true;
+                UIProcess.StartInfo.Arguments = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath();
+                UIProcess.EnableRaisingEvents = true;
+                UIProcess.Start();
+                UIProcessRunning = true;
+                UIPID = UIProcess.Id;
+                UIStreamReader = UIProcess.StandardOutput;
+                do
+                {
+                    Thread.Sleep(100);
+                    ConsoleInput = UIStreamReader.ReadLine();
+                    if (ConsoleInput.Length > 0)
+                    {
+                        //Log(ConsoleInput);
+                        if (ConsoleInput.Length >= 8)
+                        {
+                            Message = ConsoleInput.Substring(7);
+                            switch (ConsoleInput.Substring(0, 6))
+                            {
+                                case "ADDTRG":
+                                    Trigger = Message.ToLower();
+                                    if (!MonitorTriggers.Contains(Message))
+                                    {
+                                        MonitorTriggers.Add(Message);
+                                        Log("SYS:Added trigger " + Message);
+                                    }
+                                    else
+                                    {
+                                        Log("SYS:Trigger already being monitored: " + Message);
+                                    }
+                                    break;
+                                case "DELTRG":
+                                    Trigger = Message.ToLower();
+                                    if (MonitorTriggers.Contains(Trigger))
+                                    {
+                                        MonitorTriggers.Remove(Trigger);
+                                        Log("SYS:Deleted trigger " + Message);
+                                    }
+                                    else
+                                    {
+                                        Log("SYS:Trigger not being monitored: " + Message);
+                                    }
+                                    break;
+                                case "CLRTRG":
+                                    MonitorTriggers.Clear();
+                                    Log("SYS:Trigger list cleared");
+                                    break;
+                                case "UIEXIT":
+                                    UIProcessRunning = false;
+                                    break;
+                            }
+                        }
+                    }
+                } while (UIProcessRunning);
+                //UIProcess.WaitForExit();
+                UIProcessRunning = false;
+                Log("Debug UI process terminated");
+            }
+            catch (Exception e)
+            {
+                ErrorHandler(e);
             }
         }
 
@@ -218,7 +331,11 @@ namespace Debug_Plugin
 
             } else
             {
-                Log("Plugin button pressed (Debug console is running)");
+                Log("Plugin button pressed - Debug console is running - Launching UI");
+                if (!UIProcessRunning)
+                {
+                    Task.Run(() => RunDebugUI());
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 class Debug_Console
 {
