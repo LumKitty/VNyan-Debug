@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -24,10 +25,11 @@ namespace Debug_Plugin
 {
     public class Debug_Plugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler, VNyanInterface.ITriggerHandler
     {
+        private const string VarMonLoop = "_lum_dbg_varmon_loop";
         private string ErrorFile = "";
         // string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
         private string LogFile = "";
-        private string Version = "0.3-alpha";
+        private string Version = "0.4-alpha";
         private string ConsolePath = "";
         private StreamWriter DebugStreamWriter = null;
         private StreamReader UIStreamReader = null;
@@ -38,7 +40,8 @@ namespace Debug_Plugin
         private int DebugPID;
         private int UIPID;
         dynamic SettingsJSON;
-        List<String> MonitorTriggers = new List<String> { };
+        List<string> MonitorTriggers = new List<string> { };
+        Dictionary<string,float> MonitorFloats = new Dictionary<string, float> {};
         private void Log(string message)
         {
             if (LogFile.ToString().Length > 0)
@@ -113,7 +116,10 @@ namespace Debug_Plugin
         {
             if (TriggerName.Length > 0)
             {
-                Log("Calling " + TriggerName + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + Text1 + ", " + Text2 + ", " + Text3);
+                if (TriggerName != VarMonLoop)
+                {
+                    Log("Calling " + TriggerName + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + Text1 + ", " + Text2 + ", " + Text3);
+                }
                 VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger(TriggerName, int1, int2, int3, Text1, Text2, Text3);
             }
             else
@@ -130,6 +136,7 @@ namespace Debug_Plugin
                 LoadPluginSettings();
                 System.IO.File.WriteAllText(LogFile, "Started v"+Version+"\r\n");
                 string CommandLine = Environment.CommandLine;
+                string ItemName;
                 if (CommandLine[0] == '"')
                 {
                     int n = CommandLine.IndexOf('"', 1);
@@ -158,12 +165,40 @@ namespace Debug_Plugin
                         }
                     }
                 }
+                string DefaultFloats = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\DefaultDecimals.txt";
+                if (File.Exists(DefaultFloats))
+                {
+                    foreach (string Item in File.ReadAllLines(DefaultFloats))
+                    {
+                        if (Item.Substring(0, 1) == "+")
+                        {
+                            ItemName = Item.Substring(1).ToLower();
+                            MonitorFloats.Add(ItemName, VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(ItemName));
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
                 ErrorHandler(e);
             }
         }
+        private void DoVariableMonitor()
+        {
+            float TempValue;
+            List<string> Keys = new List<string>(MonitorFloats.Keys);
+            foreach (string FloatName in Keys)
+            {
+                TempValue = VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(FloatName);
+                if (MonitorFloats[FloatName] != TempValue)
+                {
+                    Log("DEC: " + FloatName + " = " + TempValue.ToString());
+                    MonitorFloats[FloatName] = TempValue;
+                }
+            }
+            
+        }
+        
         public void triggerCalled(string name, int int1, int int2, int int3, string text1, string text2, string text3)
         {
             try
@@ -202,7 +237,13 @@ namespace Debug_Plugin
                                     "rz=" + rZ.ToString("0.0000000000000")
                                 );
                                 break;
-
+                            case "_varmon":
+                                DoVariableMonitor();
+                                if (DebugProcessRunning)
+                                {
+                                    CallVNyan(VarMonLoop, 0, 0, 0, "", "", "");
+                                }
+                                break;
                         }
                     }
                 }
@@ -237,6 +278,7 @@ namespace Debug_Plugin
             DebugStreamWriter = DebugProcess.StandardInput;
             // DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
             // DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
+            CallVNyan(VarMonLoop, 0, 0, 0, "", "", "");
             do
             {
                 Thread.Sleep(100);
