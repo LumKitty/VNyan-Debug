@@ -1,6 +1,6 @@
 # VNyan node graph debug tool
 
-![image](https://github.com/user-attachments/assets/b06a6f16-11dd-408c-af92-1852388a8e22)
+![image](https://github.com/user-attachments/assets/5ad5e788-080d-4f12-8d21-83f0a63ba37c)
 
 This tool aims to make debugging complex node graphs easier by providing a way to log messages in real time from within your node graphs.
 Start it from the plugins menu, and then use the two provided functions:
