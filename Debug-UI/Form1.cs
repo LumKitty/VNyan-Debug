@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Debug_UI
 {
@@ -41,7 +43,7 @@ namespace Debug_UI
         {
             string TriggerName = listTriggers.Items[e.Index].ToString().ToLower();
             //Console.WriteLine(TriggerName);
-            if (listTriggers.CheckedItems.Contains(TriggerName))
+            if (e.NewValue == CheckState.Unchecked)
             {
                 Console.WriteLine("DELTRG:" + TriggerName);
             }
@@ -66,39 +68,33 @@ namespace Debug_UI
 
         void SaveTriggers(string FileName)
         {
-            System.IO.StreamWriter TriggerFile = File.CreateText(FileName);
+            JArray Triggers = new JArray();
             foreach (var Item in listTriggers.Items)
             {
-                if (listTriggers.CheckedItems.Contains(Item))
-                {
-                    TriggerFile.Write("+");
-                }
-                else
-                {
-                    TriggerFile.Write("-");
-                }
-                TriggerFile.WriteLine(Item);
+                Triggers.Add(
+                    new JObject(
+                        new JProperty("Name", Item),
+                        new JProperty("Monitor", listTriggers.CheckedItems.Contains(Item))
+                    )
+                );
             }
-            TriggerFile.Close();
+
+            JObject Settings = new JObject(
+                new JProperty("Triggers", Triggers),
+                new JProperty("Decimals", new JArray()),
+                new JProperty("Text", new JArray()),
+                new JProperty("Dictionaries", new JArray())
+            );
+            File.WriteAllText(FileName, Settings.ToString());
         }
         void LoadTriggers(string FileName)
         {
             Console.WriteLine("CLRTRG::");
             listTriggers.Items.Clear();
-            foreach (string Item in File.ReadAllLines(FileName))
+            dynamic Settings = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(FileName));
+            foreach (var Trigger in Settings.Triggers)
             {
-                switch (Item.Substring(0, 1))
-                {
-                    case "+":
-                        listTriggers.Items.Add(Item.Substring(1), true);
-                        break;
-                    case "-":
-                        listTriggers.Items.Add(Item.Substring(1), false);
-                        break;
-                    default:
-                        listTriggers.Items.Add(Item, false);
-                        break;
-                }
+                listTriggers.Items.Add(Trigger.Name.ToString(), (Trigger.Monitor.ToString().ToLower() == "true"));
             }
         }
 
@@ -120,7 +116,7 @@ namespace Debug_UI
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            DefaultTriggers = Debug_UI.ProfilePath + "\\DefaultTriggers.txt";
+            DefaultTriggers = Debug_UI.ProfilePath + Debug_UI.DefaultSettingsFile;
             dlgLoadTriggers.InitialDirectory = Debug_UI.ProfilePath;
             dlgSaveTriggers.InitialDirectory = Debug_UI.ProfilePath;
             //Console.WriteLine(Debug_UI.ProfilePath);
@@ -128,6 +124,11 @@ namespace Debug_UI
             {
                 LoadTriggers(DefaultTriggers);
             }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SaveTriggers(Debug_UI.ProfilePath + Debug_UI.DefaultSettingsFile);
         }
     }
 }

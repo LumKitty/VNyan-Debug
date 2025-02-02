@@ -103,12 +103,12 @@
             // dlgSaveTriggers
             // 
             dlgSaveTriggers.FileName = "*.txt";
-            dlgSaveTriggers.Filter = "Text files|*.txt|All files|*.*";
+            dlgSaveTriggers.Filter = "JSON files|*.json|All files|*.*";
             dlgSaveTriggers.Title = "Save trigger list to...";
             // 
             // dlgLoadTriggers
             // 
-            dlgLoadTriggers.Filter = "Text files|*.txt|All files|*.*";
+            dlgLoadTriggers.Filter = "JSON files|*.json|All files|*.*";
             dlgLoadTriggers.Title = "Load trigger list from...";
             // 
             // Form1
@@ -124,6 +124,7 @@
             Controls.Add(listTriggers);
             Name = "Form1";
             Text = "Debug Settings";
+            FormClosing += Form1_FormClosing;
             Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();

@@ -20,17 +20,22 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.XR;
 using static UnityEngine.Networking.UnityWebRequest;
+using System.IO.Pipes;
 
 namespace Debug_Plugin
 {
     public class Debug_Plugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler, VNyanInterface.ITriggerHandler
     {
         private const string VarMonLoop = "_lum_dbg_varmon_loop";
+        private const string DebugPipeName = "uk.lum.vnyan-debug.console";
+        private string DefaultSettingsFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\Lum-Debug-Settings.json";
         private string ErrorFile = "";
         // string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
         private string LogFile = "";
         private string Version = "0.4-alpha";
         private string ConsolePath = "";
+        private NamedPipeServerStream DebugPipe;
+        private NamedPipeServerStream UIPipe;
         private StreamWriter DebugStreamWriter = null;
         private StreamReader UIStreamReader = null;
         private Process DebugProcess = null;
@@ -51,6 +56,7 @@ namespace Debug_Plugin
             if (DebugProcessRunning)
             {
                 DebugStreamWriter.WriteLine(message);
+                DebugStreamWriter.Flush();
             }
         }
 
@@ -94,6 +100,10 @@ namespace Debug_Plugin
         {
             // Save settings
             SavePluginSettings();
+            if (DebugProcessRunning)
+            {
+                Log("QUIT");
+            }
         }
         private void SavePluginSettings()
         {
@@ -154,6 +164,27 @@ namespace Debug_Plugin
                 {
                     Log("Debug Console not found should be at: " + ConsolePath);
                 }
+
+                if (File.Exists (DefaultSettingsFile)) {
+                    dynamic Settings = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(DefaultSettingsFile));
+                    foreach (var Trigger in Settings.Triggers)
+                    {
+                        if (Trigger.Monitor.ToString().ToLower() == "true")
+                        {
+                            Log("Monitoring trigger: " + Trigger.Name.ToString());
+                            MonitorTriggers.Add(Trigger.Name.ToString().ToLower());
+                        }
+                    }
+                    foreach (var Decimal in Settings.Decimals)
+                    {
+                        if (Decimal.Monitor.ToString().ToLower() == "true")
+                        {
+                            Log("Monitoring decimal: " + Decimal.Name.ToString());
+                            MonitorFloats.Add(Decimal.Name.ToString().ToLower(),0);
+                        }
+                    }
+                }
+                /*
                 string DefaultTriggers = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\DefaultTriggers.txt";
                 if (File.Exists (DefaultTriggers))
                 {
@@ -176,27 +207,34 @@ namespace Debug_Plugin
                             MonitorFloats.Add(ItemName, VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(ItemName));
                         }
                     }
-                }
+                }*/
             }
             catch (Exception e)
             {
                 ErrorHandler(e);
             }
         }
-        private void DoVariableMonitor()
+        private void DoVariableUpdate()
         {
-            float TempValue;
-            List<string> Keys = new List<string>(MonitorFloats.Keys);
-            foreach (string FloatName in Keys)
-            {
-                TempValue = VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(FloatName);
-                if (MonitorFloats[FloatName] != TempValue)
+            if (DebugProcessRunning) {
+                bool Changes = false;
+                float TempValue;
+                List<string> Keys = new List<string>(MonitorFloats.Keys);
+                foreach (string FloatName in Keys)
                 {
-                    Log("DEC: " + FloatName + " = " + TempValue.ToString());
-                    MonitorFloats[FloatName] = TempValue;
+                    TempValue = VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(FloatName);
+                    if (MonitorFloats[FloatName] != TempValue)
+                    {
+                        Log("DEC: " + FloatName + " = " + TempValue.ToString());
+                        MonitorFloats[FloatName] = TempValue;
+                        Changes = true;
+                    }
+                }
+                if (!Changes)
+                {
+                    Log("SYS: No variables changed");
                 }
             }
-            
         }
         
         public void triggerCalled(string name, int int1, int int2, int int3, string text1, string text2, string text3)
@@ -237,12 +275,42 @@ namespace Debug_Plugin
                                     "rz=" + rZ.ToString("0.0000000000000")
                                 );
                                 break;
-                            case "_varmon":
-                                DoVariableMonitor();
-                                if (DebugProcessRunning)
+                            case "_checkvars":
+                                DoVariableUpdate();
+                                break;
+                            case "_setcam_pos":
+                                string param;
+                                float value;
+                                UnityEngine.Vector3 pos = new UnityEngine.Vector3(0,0,0);
+                                UnityEngine.Vector3 rot = new UnityEngine.Vector3(0,0,0);
+                                int n;
+                                foreach (string line in GUIUtility.systemCopyBuffer.Split('\n'))
                                 {
-                                    CallVNyan(VarMonLoop, 0, 0, 0, "", "", "");
+                                    n = line.IndexOf("=");
+                                    param = line.Substring(0, n);
+                                    value = float.Parse(line.Substring(n + 1));
+                                    Log("Param: " + param + ", Value: " + value.ToString("0.000000000000000"));
+                                    switch (param)
+                                    {
+                                        case "fov":
+                                            Camera.main.fieldOfView = value; break;
+                                        case "x":
+                                            pos.x = value; break;
+                                        case "y":
+                                            pos.y = value; break;
+                                        case "z":
+                                            pos.z = value; break;
+                                        case "rx":
+                                            rot.x = value; break;
+                                        case "ry":
+                                            rot.y = value; break;
+                                        case "rz":
+                                            rot.z = value; break;
+                                    }
                                 }
+                                Log("Setting Camera");
+                                Camera.main.transform.position = pos;
+                                Camera.main.transform.rotation = Quaternion.Euler(rot);
                                 break;
                         }
                     }
@@ -262,29 +330,44 @@ namespace Debug_Plugin
         }
         async Task RunDebugProcess()
         {
-
+            Log("Creating pipe: " + DebugPipeName);
+            DebugPipe = new NamedPipeServerStream(DebugPipeName, PipeDirection.Out);
+            Log("Created pipe, connecting streamewriter");
+            DebugStreamWriter = new StreamWriter(DebugPipe);
+            Log("Connected. Starting debug console");
             DebugProcess = new Process();
             DebugProcess.StartInfo.FileName = ConsolePath;
             DebugProcess.StartInfo.UseShellExecute = false;
-            DebugProcess.StartInfo.RedirectStandardInput = true;
+            DebugProcess.StartInfo.RedirectStandardInput = false;
             DebugProcess.StartInfo.RedirectStandardOutput = false;
-            DebugProcess.StartInfo.RedirectStandardError = true;
+            DebugProcess.StartInfo.RedirectStandardError = false;
             DebugProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
             DebugProcess.StartInfo.CreateNoWindow = false;
+            DebugProcess.StartInfo.Arguments = "/console";
             DebugProcess.EnableRaisingEvents = true;
             DebugProcess.Start();
-            DebugProcessRunning = true;
-            DebugPID = DebugProcess.Id;
-            DebugStreamWriter = DebugProcess.StandardInput;
-            // DebugStreamWriter.WriteLine("Connected to plugin v"+Version);
-            // DebugStreamWriter.WriteLine("Checking for triggers: " + MonitorTriggers.ToString());
-            CallVNyan(VarMonLoop, 0, 0, 0, "", "", "");
-            do
+            Log("Console started, waiting for connection to pipe");
+            DebugPipe.WaitForConnection();
+
+            if (DebugPipe.IsConnected) {
+                Log("SYS: Pipe connected");
+
+                DebugProcessRunning = true;
+                DebugPID = DebugProcess.Id;
+
+                Log("SYS: Connected to plugin v" + Version);
+                Log("SYS: Checking for triggers: " + MonitorTriggers.ToString());
+
+                DebugProcess.WaitForExit();
+
+                DebugProcessRunning = false;
+                Log("Debug console process terminated");
+                DebugStreamWriter.Close();
+                DebugPipe.Close();
+            } else
             {
-                Thread.Sleep(100);
-            } while (ProcessExists(DebugPID));
-            DebugProcessRunning = false;
-            Log("Debug console process terminated");
+                Log("Pipe connection timed out after 5 seconds");
+            }
         }
 
         async Task RunDebugUI()
