@@ -36,6 +36,10 @@
             btnLoad = new Button();
             dlgSaveTriggers = new SaveFileDialog();
             dlgLoadTriggers = new OpenFileDialog();
+            listDecimals = new CheckedListBox();
+            btnAddDecimal = new Button();
+            label2 = new Label();
+            textDecimalName = new TextBox();
             SuspendLayout();
             // 
             // listTriggers
@@ -45,7 +49,7 @@
             listTriggers.FormattingEnabled = true;
             listTriggers.Location = new Point(12, 34);
             listTriggers.Name = "listTriggers";
-            listTriggers.Size = new Size(256, 400);
+            listTriggers.Size = new Size(256, 436);
             listTriggers.TabIndex = 0;
             listTriggers.ItemCheck += listTriggers_ItemCheck;
             listTriggers.DoubleClick += listTriggers_DoubleClick;
@@ -81,7 +85,7 @@
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSave.Location = new Point(280, 11);
+            btnSave.Location = new Point(700, 11);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(75, 23);
             btnSave.TabIndex = 4;
@@ -92,7 +96,7 @@
             // btnLoad
             // 
             btnLoad.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnLoad.Location = new Point(280, 40);
+            btnLoad.Location = new Point(700, 40);
             btnLoad.Name = "btnLoad";
             btnLoad.Size = new Size(75, 23);
             btnLoad.TabIndex = 5;
@@ -111,11 +115,54 @@
             dlgLoadTriggers.Filter = "JSON files|*.json|All files|*.*";
             dlgLoadTriggers.Title = "Load trigger list from...";
             // 
+            // listDecimals
+            // 
+            listDecimals.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            listDecimals.CheckOnClick = true;
+            listDecimals.FormattingEnabled = true;
+            listDecimals.Location = new Point(274, 34);
+            listDecimals.Name = "listDecimals";
+            listDecimals.Size = new Size(256, 436);
+            listDecimals.TabIndex = 6;
+            listDecimals.ItemCheck += listDecimals_ItemCheck;
+            // 
+            // btnAddDecimal
+            // 
+            btnAddDecimal.FlatStyle = FlatStyle.Flat;
+            btnAddDecimal.Location = new Point(513, 12);
+            btnAddDecimal.Name = "btnAddDecimal";
+            btnAddDecimal.Size = new Size(17, 23);
+            btnAddDecimal.TabIndex = 9;
+            btnAddDecimal.Text = "+";
+            btnAddDecimal.UseVisualStyleBackColor = true;
+            btnAddDecimal.Click += btnAddDecimal_Click;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(274, 15);
+            label2.Name = "label2";
+            label2.Size = new Size(55, 15);
+            label2.TabIndex = 8;
+            label2.Text = "Decimals";
+            // 
+            // textDecimalName
+            // 
+            textDecimalName.Location = new Point(328, 12);
+            textDecimalName.Name = "textDecimalName";
+            textDecimalName.Size = new Size(188, 23);
+            textDecimalName.TabIndex = 7;
+            textDecimalName.KeyPress += textDecimalName_KeyPress;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(367, 450);
+            ClientSize = new Size(787, 485);
+            Controls.Add(btnAddDecimal);
+            Controls.Add(label2);
+            Controls.Add(textDecimalName);
+            Controls.Add(listDecimals);
             Controls.Add(btnLoad);
             Controls.Add(btnSave);
             Controls.Add(btnAdd);
@@ -140,5 +187,9 @@
         private Button btnLoad;
         private SaveFileDialog dlgSaveTriggers;
         private OpenFileDialog dlgLoadTriggers;
+        private CheckedListBox listDecimals;
+        private Button btnAddDecimal;
+        private Label label2;
+        private TextBox textDecimalName;
     }
 }

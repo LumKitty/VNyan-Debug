@@ -29,8 +29,21 @@ namespace Debug_UI
                 if (!listTriggers.Items.Contains(textTriggerName.Text))
                 {
                     int n = listTriggers.Items.Add(textTriggerName.Text, true);
-                    //Console.Error.WriteLine("ADDTRG:" + textTriggerName.Text.ToLower());
+                    Console.Error.WriteLine("ADDTRG:" + textTriggerName.Text.ToLower());
                     textTriggerName.Text = "";
+                }
+            }
+        }
+
+        void AddDecimal()
+        {
+            if (textTriggerName.Text.Length > 0)
+            {
+                if (!listDecimals.Items.Contains(textDecimalName.Text))
+                {
+                    int n = listDecimals.Items.Add(textDecimalName.Text, true);
+                    Console.Error.WriteLine("ADDDEC:" + textDecimalName.Text.ToLower());
+                    textDecimalName.Text = "";
                 }
             }
         }
@@ -60,6 +73,14 @@ namespace Debug_UI
                 AddTrigger();
             }
         }
+        private void textDecimalName_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Convert.ToInt32(e.KeyChar) == 13)
+            {
+                AddDecimal();
+            }
+        }
+
 
         private void listTriggers_DoubleClick(object sender, EventArgs e)
         {
@@ -69,6 +90,7 @@ namespace Debug_UI
         void SaveTriggers(string FileName)
         {
             JArray Triggers = new JArray();
+            JArray Decimals = new JArray();
             foreach (var Item in listTriggers.Items)
             {
                 Triggers.Add(
@@ -78,10 +100,19 @@ namespace Debug_UI
                     )
                 );
             }
+            foreach (var Item in listDecimals.Items)
+            {
+                Decimals.Add(
+                    new JObject(
+                        new JProperty("Name", Item),
+                        new JProperty("Monitor", listDecimals.CheckedItems.Contains(Item))
+                    )
+                );
+            }
 
             JObject Settings = new JObject(
                 new JProperty("Triggers", Triggers),
-                new JProperty("Decimals", new JArray()),
+                new JProperty("Decimals", Decimals),
                 new JProperty("Text", new JArray()),
                 new JProperty("Dictionaries", new JArray())
             );
@@ -95,6 +126,10 @@ namespace Debug_UI
             foreach (var Trigger in Settings.Triggers)
             {
                 listTriggers.Items.Add(Trigger.Name.ToString(), (Trigger.Monitor.ToString().ToLower() == "true"));
+            }
+            foreach (var Decimal in Settings.Decimals)
+            {
+                listDecimals.Items.Add(Decimal.Name.ToString(), (Decimal.Monitor.ToString().ToLower() == "true"));
             }
         }
 
@@ -129,6 +164,25 @@ namespace Debug_UI
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveTriggers(Debug_UI.ProfilePath + Debug_UI.DefaultSettingsFile);
+        }
+
+        private void btnAddDecimal_Click(object sender, EventArgs e)
+        {
+            AddDecimal();
+        }
+
+        private void listDecimals_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            string DecimalName = listDecimals.Items[e.Index].ToString().ToLower();
+            //Console.WriteLine(TriggerName);
+            if (e.NewValue == CheckState.Unchecked)
+            {
+                Console.WriteLine("DELDEC:" + DecimalName);
+            }
+            else
+            {
+                Console.WriteLine("ADDDEC:" + DecimalName);
+            }
         }
     }
 }

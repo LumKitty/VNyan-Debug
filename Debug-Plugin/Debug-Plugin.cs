@@ -375,7 +375,7 @@ namespace Debug_Plugin
             try {
                 string ConsoleInput;
                 string Message;
-                string Trigger;
+                string Name;
                 UIProcess = new Process();
                 UIProcess.StartInfo.FileName = ConsolePath;
                 UIProcess.StartInfo.UseShellExecute = false;
@@ -403,10 +403,10 @@ namespace Debug_Plugin
                             switch (ConsoleInput.Substring(0, 6))
                             {
                                 case "ADDTRG":
-                                    Trigger = Message.ToLower();
-                                    if (!MonitorTriggers.Contains(Message))
+                                    Name = Message.ToLower();
+                                    if (!MonitorTriggers.Contains(Name))
                                     {
-                                        MonitorTriggers.Add(Message);
+                                        MonitorTriggers.Add(Name);
                                         Log("SYS:Added trigger " + Message);
                                     }
                                     else
@@ -415,10 +415,10 @@ namespace Debug_Plugin
                                     }
                                     break;
                                 case "DELTRG":
-                                    Trigger = Message.ToLower();
-                                    if (MonitorTriggers.Contains(Trigger))
+                                    Name = Message.ToLower();
+                                    if (MonitorTriggers.Contains(Name))
                                     {
-                                        MonitorTriggers.Remove(Trigger);
+                                        MonitorTriggers.Remove(Name);
                                         Log("SYS:Deleted trigger " + Message);
                                     }
                                     else
@@ -429,6 +429,34 @@ namespace Debug_Plugin
                                 case "CLRTRG":
                                     MonitorTriggers.Clear();
                                     Log("SYS:Trigger list cleared");
+                                    break;
+                                case "ADDDEC":
+                                    Name = Message.ToLower();
+                                    if (!MonitorFloats.ContainsKey(Name))
+                                    {
+                                        MonitorFloats.Add(Message,VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name));
+                                        Log("SYS:Added decimal " + Message);
+                                    }
+                                    else
+                                    {
+                                        Log("SYS:Decimal already being monitored: " + Message);
+                                    }
+                                    break;
+                                case "DELDEC":
+                                    Name = Message.ToLower();
+                                    if (MonitorFloats.ContainsKey(Name))
+                                    {
+                                        MonitorFloats.Remove(Name);
+                                        Log("SYS:Deleted decimal " + Message);
+                                    }
+                                    else
+                                    {
+                                        Log("SYS:Decimal not being monitored: " + Message);
+                                    }
+                                    break;
+                                case "CLRDEC":
+                                    MonitorFloats.Clear();
+                                    Log("SYS:Decimal list cleared");
                                     break;
                                 case "UIEXIT":
                                     UIProcessRunning = false;
