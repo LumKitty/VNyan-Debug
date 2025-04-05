@@ -28,11 +28,11 @@ namespace Debug_Plugin
     {
         private const string VarMonLoop = "_lum_dbg_varmon_loop";
         private const string DebugPipeName = "uk.lum.vnyan-debug.console";
-        private string DefaultSettingsFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\Lum-Debug-Settings.json";
-        private string ErrorFile = "";
+        // private string DefaultSettingsFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "\\Lum-Debug-Settings.json";
+        // private string ErrorFile = "";
         // string TriggersFile = VNyanInterface.VNyanInterface.VNyanSettings.getProfilePath() + "Lum-Debug-Triggers.txt";
-        private string LogFile = "";
-        private string Version = "0.4-alpha";
+        // private string LogFile = "";
+        private string Version = "0.5-alpha";
         private string ConsolePath = "";
         private NamedPipeServerStream DebugPipe;
         private NamedPipeServerStream UIPipe;
@@ -49,76 +49,29 @@ namespace Debug_Plugin
         Dictionary<string,float> MonitorFloats = new Dictionary<string, float> {};
         private void Log(string message)
         {
-            if (LogFile.ToString().Length > 0)
-            {
-                System.IO.File.AppendAllText(LogFile, message + "\r\n");
-            }
             if (DebugProcessRunning)
             {
                 DebugStreamWriter.WriteLine(message);
                 DebugStreamWriter.Flush();
             }
+            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString("_lum_dbg_msg", message);
         }
 
-        private void LoadPluginSettings()
-        {
-            // Get settings in dictionary
-            Dictionary<string, string> settings = VNyanInterface.VNyanInterface.VNyanSettings.loadSettings("Lum-Debug.cfg");
-            if (settings != null)
-            {
-                string temp_ErrorFile;
-                string temp_LogFile;
-                settings.TryGetValue("ErrorFile", out temp_ErrorFile);
-                settings.TryGetValue("LogFile", out temp_LogFile);
-                if (temp_ErrorFile != null)
-                {
-                    ErrorFile = temp_ErrorFile;
-                }
-                else
-                {
-                    ErrorFile = System.IO.Path.GetTempPath() + "\\Lum_DBG_Error.txt";
-                }
-                if (temp_LogFile != null)
-                {
-                    LogFile = temp_LogFile;
-                }
-                else
-                {
-                    LogFile = System.IO.Path.GetTempPath() + "\\Lum_DBG_Log.txt";
-                }
-            }
-            /*if (File.Exists(TriggersFile))
-            {
-                String[] Triggers = File.ReadLines(TriggersFile).ToString().Split('\n');
-                foreach (string Trigger in Triggers) {
-                    MonitorTriggers.Add(Trigger.ToString());
-                }
-            }*/
-
-        }
         private void OnApplicationQuit()
         {
             // Save settings
-            SavePluginSettings();
+            // SavePluginSettings();
             if (DebugProcessRunning)
             {
                 Log("QUIT");
             }
         }
-        private void SavePluginSettings()
-        {
-            Dictionary<string, string> settings = new Dictionary<string, string>();
-            settings["ErrorFile"] = ErrorFile;
-            settings["LogFile"] = LogFile;
-            // settings["SomeValue2"] = someValue2.ToString(CultureInfo.InvariantCulture); // Make sure to use InvariantCulture to avoid decimal delimeter errors
 
-            VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("Lum-Debug.cfg", settings);
-            //File.WriteAllText(JsonFile, SettingsJSON.ToString());
-        }
 
         void ErrorHandler(Exception e)
         {
-            System.IO.File.WriteAllText(ErrorFile, e.ToString());
+            // System.IO.File.WriteAllText(ErrorFile, e.ToString());
+            VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString("_lum_dbg_err", e.ToString());
             CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
             Log("DBG:" + e.ToString());
         }
@@ -143,10 +96,10 @@ namespace Debug_Plugin
             {
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
                 VNyanInterface.VNyanInterface.VNyanUI.registerPluginButton("LumKitty's Debug Tool", this);
-                LoadPluginSettings();
-                System.IO.File.WriteAllText(LogFile, "Started v"+Version+"\r\n");
+                // LoadPluginSettings();
+                // System.IO.File.WriteAllText(LogFile, "Started v"+Version+"\r\n");
                 string CommandLine = Environment.CommandLine;
-                string ItemName;
+                // string ItemName;
                 if (CommandLine[0] == '"')
                 {
                     int n = CommandLine.IndexOf('"', 1);
@@ -165,7 +118,7 @@ namespace Debug_Plugin
                     Log("Debug Console not found should be at: " + ConsolePath);
                 }
 
-                if (File.Exists (DefaultSettingsFile)) {
+                /* if (File.Exists (DefaultSettingsFile)) {
                     dynamic Settings = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(DefaultSettingsFile));
                     foreach (var Trigger in Settings.Triggers)
                     {
@@ -254,6 +207,9 @@ namespace Debug_Plugin
                                 break;
                             case "_err":
                                 Log("ERR: " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + "|" + text1 + "|" + text2 + "|" + text3);
+                                break;
+                            case "_raw":
+                                Log(text1);
                                 break;
                             // Log("Detected: " + name + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + text1 + ", " + text2 + ", " + text3);
                             case "_getcam":

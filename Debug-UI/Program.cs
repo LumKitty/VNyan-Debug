@@ -6,10 +6,10 @@ namespace Debug_UI
 {
     internal static class Debug_UI
     {
-        private static string Version = "0.4-alpha";
+        private static string Version = "0.5-alpha";
         private static string LineInput = "";
         private const string DebugPipeName = "uk.lum.vnyan-debug.console";
-        private const string LogFile = "D:\\Dev\\VNyan-Debug-Console.log"; // TODO: DONT FUCKING RELEASE LIKE THIS
+        private const string LogFile = ""; // "D:\\Dev\\VNyan-Debug-Console.log"; // TODO: DONT FUCKING RELEASE LIKE THIS
 
         public const string DefaultSettingsFile = "\\Lum-Debug-Settings.json";
         public static string ProfilePath = "";
